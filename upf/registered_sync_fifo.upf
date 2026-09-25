@@ -1,0 +1,173 @@
+upf_version 2.1
+# upf definition for the wrapper.
+# PD_1 and PD_2 have been created and supplied thier respective voltages
+
+create_power_domain PD_TOP -include_scope
+
+# ** creation of power domain
+ # for the register block inside the wrapper
+create_power_domain PD_1 -elements {u_input_register}
+ # for fifo block in wrapper
+create_power_domain PD_2 -elements {u_fifo}
+
+# ** creation of supply port
+create_supply_port VDD_0P7  -direction in
+create_supply_port VDD_0P6  -direction in
+create_supply_port VSS      -direction in
+
+# ** creation of supply net
+create_supply_net VDD_0P7_n
+create_supply_net VDD_0P6_n
+create_supply_net VSS_n
+
+# ** connect supply net with supply port
+connect_supply_net VDD_0P7_n  -ports {VDD_0P7}
+connect_supply_net VDD_0P6_n  -ports {VDD_0P6}
+connect_supply_net VSS_n      -ports {VSS}
+
+# ** need to set the supply to the domains - these are currently directly connected to the mains
+# ** we cannot switch them ON or OFF.
+set_domain_supply_net PD_TOP    -primary_power_net VDD_0P7_n  -primary_ground_net VSS_n
+#set_domain_supply_net PD_1      -primary_power_net VDD_0P7_n  -primary_ground_net VSS_n     # changing this to a switch so that it can be turned ON or OFF
+set_domain_supply_net PD_2      -primary_power_net VDD_0P6_n  -primary_ground_net VSS_n
+
+# ** creating a switch so that PD_1 can be switched ON or OFF
+create_supply_net VDD_PD1_n -domain PD_1
+
+# ** DEFININING SWITCHABLE PORTS using power switch
+# ** define the domain of voltage for switch
+# ** define the input voltage i.e. 0.7V for this case - connecting to the power net
+# ** define the connection of output port of switch to the "power net"
+# ** define the switch ON and OFF conditions - when CTRL i.e. "pd1_power_on_i" is 0 it is OFF, when it is 1 it is ON
+create_power_switch PS_PD1 \
+    -domain PD_1 \
+    -input_supply_port {VIN VDD_0P7_n} \
+    -output_supply_port {VOUT VDD_PD1_n} \
+    -control_port {CTRL pd1_power_on_i} \
+    -on_state {PD1_SW_ON VIN {CTRL}} \
+    -off_state {PD1_SW_OFF {!CTRL}}
+
+# ** defining the primary source of power for PD_1
+set_domain_supply_net PD_1 -primary_power_net VDD_PD1_n -primary_ground_net VSS_n
+
+# added the port voltages for VDD_0P7 and VDD_0P6
+add_port_state VDD_0P7 -state {VDD_0P7_ON 0.7}
+add_port_state VDD_0P6 -state {VDD_0P6_ON 0.6}
+add_port_state VSS      -state {VSS_ON 0.0}
+
+
+# next is the definition of electrical POWER STATE of each domain's primary supply using power state table
+# NORMAL OPERATION          PD_1 (0.7 Volts)        PD_2 (0.6 Volts)
+# REGISTER SHUTDOWN         PD_1 (OFF)              PD_2 (0.6 Volts)
+# ** 1. PD_TOP primary supply is always on at  0.7 Volts
+
+add_power_state PD_TOP.primary \
+    -state {TOP_ON \
+        -supply_expr {
+            power == {FULL_ON 0.7} && ground == {FULL_ON 0.0}
+        }
+    }
+
+# ** 2. PD_1 can operate at 0.7 V or be switched off.
+
+add_power_state PD_1.primary \
+    -state {PD1_ON \
+        -supply_expr {
+            power == {FULL_ON 0.7} &&
+            ground == {FULL_ON 0.0}
+        }
+    } \
+    -state {PD1_OFF \
+        -supply_expr {
+            power == OFF &&
+            ground == {FULL_ON 0.0}
+        } \
+        -simstate CORRUPT
+    }
+
+# ** 3. PD_2 is always on at 0.6 V.
+
+add_power_state PD_2.primary \
+    -state {PD2_ON \
+        -supply_expr {
+            power == {FULL_ON 0.6} &&
+            ground == {FULL_ON 0.0}
+        }
+    }
+
+
+# LEVEL SHIFTER - Shift all signals entering PD_2 from 0.7 V to 0.6 V.
+# the keyword "high_to_low" here tells the tool to only touch those signals which are transitioning from High voltage to low voltage
+# we dont need to worry about the level shifter being applied to all the input ports/
+# making it explicit by adding "-source" and "-sink" keywords
+# PD_1 at 0.7 V to PD_2 at 0.6 V.
+
+set_level_shifter LS_PD1_TO_PD2 \
+    -domain PD_2 \
+    -applies_to inputs \
+    -source PD_1.primary \
+    -sink PD_2.primary \
+    -rule high_to_low \
+    -location self
+
+# PD_TOP at 0.7 V to PD_2 at 0.6 V.
+
+set_level_shifter LS_PDTOP_TO_PD2 \
+    -domain PD_2 \
+    -applies_to inputs \
+    -source PD_TOP.primary \
+    -sink PD_2.primary \
+    -rule high_to_low \
+    -location self
+
+
+# LEVEL SHIFTER - Shift all signals leaving PD_2 from 0.6 V to 0.7 V.
+# same here - the keyword "low_to_high" tells the tool to only touch those signals which are transitioning from LOW to HIGH.
+# we dont need to worry about the level shifter being applied to all the inputs of this block
+# making it explicit by adding "-source" and "-sink" keywords
+# PD_2 at 0.6 V to PD_1 at 0.7 V.
+# Shift fifo_full_o from the 0.6 V FIFO domain to the 0.7 V register domain.
+
+set_level_shifter LS_PD2_TO_PD1 \
+    -domain PD_1 \
+    -applies_to inputs \
+    -source PD_2.primary \
+    -sink PD_1.primary \
+    -rule low_to_high \
+    -location self
+# PD_2 at 0.6 V to PD_TOP at 0.7 V.
+
+set_level_shifter LS_PD2_TO_PDTOP \
+    -domain PD_2 \
+    -applies_to outputs \
+    -source PD_2.primary \
+    -sink PD_TOP.primary \
+    -rule low_to_high \
+    -location parent
+
+
+
+# isolation cell for the signals traveeling from switchable PD_1 to always on PD_2
+
+set_isolation ISO_PD1_TO_PD2 \
+    -domain PD_1 \
+    -applies_to outputs \
+    -source PD_1.primary \
+    -sink PD_2.primary \
+    -isolation_supply_set PD_TOP.primary \
+    -clamp_value 0 \
+    -isolation_signal pd1_isolation_i \
+    -isolation_sense high \
+    -location parent
+
+# Isolate register outputs that enter the always-on wrapper domain.
+set_isolation ISO_PD1_TO_PDTOP \
+    -domain PD_1 \
+    -applies_to outputs \
+    -source PD_1.primary \
+    -sink PD_TOP.primary \
+    -isolation_supply_set PD_TOP.primary \
+    -clamp_value 0 \
+    -isolation_signal pd1_isolation_i \
+    -isolation_sense high \
+    -location parent

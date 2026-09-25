@@ -1,0 +1,102 @@
+-----------------------------------------------------------
+----- QuestaSim Power Aware Static Checks Report File -----
+-----------------------------------------------------------
+-- QuestaSim Version : 2026.2_2 2026.07
+-- Generated on      : Thu Sep 24 08:09:49 2026
+-----------------------------------------------------------
+-- This is the static report of analysis done for the signals crossing power domains.
+-- This includes the structural correctness of isolation/level shifter cells and
+-- validity of power domain crossings in absence of these cells.
+--
+-- Note: Presence of "--" in domain name field indicates that the
+-- corresponding object doesn't belong to any specified power domain.
+-- Note: Presence of "N*" pattern in reporting count indicates that
+-- these 'N' cells are shared for some other source to sink path.
+-----------------------------------------------------------
+
++========================================================================================================+
+||                                     Static Checks Summary report                                     ||
++========================================================================================================+
+|Check-ID                           Count  Severity   Description                                        |
+|--------------------------------------------------------------------------------------------------------|
+|LS_VALID                              25  Note       Valid level shifters                               |
+|--------------------------------------------------------------------------------------------------------|
+|ISO_VALID                             25  Note       Valid isolation cells                              |
+|--------------------------------------------------------------------------------------------------------|
+|ISO_CLAMP_SAME_AS_RESET               23  Note       Clamp Reset match isolation cells                  |
+|--------------------------------------------------------------------------------------------------------|
++========================================================================================================+
+
++========================================================================================================+
+||                              Domain wise static Checks Detailed report                               ||
++========================================================================================================+
+-------------------------------------------------------------------------------------------------------------------
+1. Source power domain: /registered_sync_fifo_tb/dut/PD_1 to Sink power domain: /registered_sync_fifo_tb/dut/PD_TOP.
+
+    Total 1 Valid isolation cells [Total Crossings: 1, Shared Crossings: 0]
+
+    1.1. Source port: /registered_sync_fifo_tb/dut/u_input_register/data_ready_o [LowConn] to Sink port: /registered_sync_fifo_tb/dut/u_input_register/data_ready_o [HighConn], width:1
+
+        Total 1 Valid isolation cells [Total Crossings: 1, Shared Crossings: 0]
+
+        1.1.1. Inferred type: ISO_VALID, count: 1
+             Candidate Port: /registered_sync_fifo_tb/dut/u_input_register/data_ready_o, Strategy: ISO_PD1_TO_PDTOP,  Domain: /registered_sync_fifo_tb/dut/PD_1
+             Possible reason: 'Isolation is required and is present from (/registered_sync_fifo_tb/dut/PD_1) => (/registered_sync_fifo_tb/dut/PD_TOP)'
+             Analysis link: [PD2_to_PD4]
+
+-----------------------------------------------------------------------------------------------------------------
+2. Source power domain: /registered_sync_fifo_tb/dut/PD_1 to Sink power domain: /registered_sync_fifo_tb/dut/PD_2.
+
+    Total 24 Valid level shifters [Total Crossings: 24, Shared Crossings: 0]
+    Total 24 Valid isolation cells [Total Crossings: 24, Shared Crossings: 0]
+    Total 23 Clamp Reset match isolation cells [Total Crossings: 23, Shared Crossings: 0]
+
+    2.1. Source port: /registered_sync_fifo_tb/dut/u_input_register/fifo_data_o [LowConn] to Sink port: /registered_sync_fifo_tb/dut/u_fifo/folded_history_i [LowConn], width:23
+
+        Total 23 Valid level shifters [Total Crossings: 23, Shared Crossings: 0]
+        Total 23 Valid isolation cells [Total Crossings: 23, Shared Crossings: 0]
+        Total 23 Clamp Reset match isolation cells [Total Crossings: 23, Shared Crossings: 0]
+
+        2.1.1. Inferred type: LS_VALID, count: 23
+             Candidate Port: /registered_sync_fifo_tb/dut/u_fifo/folded_history_i, Strategy: LS_PD1_TO_PD2,  Domain: /registered_sync_fifo_tb/dut/PD_2
+             Possible reason: 'Level shifter of required direction is present from (/registered_sync_fifo_tb/dut/PD_1) => (/registered_sync_fifo_tb/dut/PD_2)'
+             Analysis link: [PD2_to_PD1]
+
+        2.1.2. Inferred type: ISO_VALID, count: 23
+             Candidate Port: /registered_sync_fifo_tb/dut/u_input_register/fifo_data_o, Strategy: ISO_PD1_TO_PD2,  Domain: /registered_sync_fifo_tb/dut/PD_1
+             Possible reason: 'Isolation is required and is present from (/registered_sync_fifo_tb/dut/PD_1) => (/registered_sync_fifo_tb/dut/PD_2)'
+             Analysis link: [PD2_to_PD1]
+
+        2.1.3. Inferred type: ISO_CLAMP_SAME_AS_RESET, count: 23
+             Candidate Port: /registered_sync_fifo_tb/dut/u_input_register/fifo_data_o, Strategy: ISO_PD1_TO_PD2,  Domain: /registered_sync_fifo_tb/dut/PD_1
+             Possible reason: 'Clamp value specified in isolation strategy '0' matches with reset value of flop '00000000000000000000000''
+             Analysis link: [PD2_to_PD1]
+
+    2.2. Source port: /registered_sync_fifo_tb/dut/u_input_register/fifo_wr_en_o [LowConn] to Sink port: /registered_sync_fifo_tb/dut/u_fifo/wr_en_i [LowConn], width:1
+
+        Total 1 Valid level shifters [Total Crossings: 1, Shared Crossings: 0]
+        Total 1 Valid isolation cells [Total Crossings: 1, Shared Crossings: 0]
+
+        2.2.1. Inferred type: LS_VALID, count: 1
+             Candidate Port: /registered_sync_fifo_tb/dut/u_fifo/wr_en_i, Strategy: LS_PD1_TO_PD2,  Domain: /registered_sync_fifo_tb/dut/PD_2
+             Possible reason: 'Level shifter of required direction is present from (/registered_sync_fifo_tb/dut/PD_1) => (/registered_sync_fifo_tb/dut/PD_2)'
+             Analysis link: [PD2_to_PD1]
+
+        2.2.2. Inferred type: ISO_VALID, count: 1
+             Candidate Port: /registered_sync_fifo_tb/dut/u_input_register/fifo_wr_en_o, Strategy: ISO_PD1_TO_PD2,  Domain: /registered_sync_fifo_tb/dut/PD_1
+             Possible reason: 'Isolation is required and is present from (/registered_sync_fifo_tb/dut/PD_1) => (/registered_sync_fifo_tb/dut/PD_2)'
+             Analysis link: [PD2_to_PD1]
+
+-----------------------------------------------------------------------------------------------------------------
+3. Source power domain: /registered_sync_fifo_tb/dut/PD_2 to Sink power domain: /registered_sync_fifo_tb/dut/PD_1.
+
+    Total 1 Valid level shifters [Total Crossings: 1, Shared Crossings: 0]
+
+    3.1. Source port: /registered_sync_fifo_tb/dut/u_fifo/fifo_full_o [LowConn] to Sink port: /registered_sync_fifo_tb/dut/u_input_register/fifo_full_i [LowConn], width:1
+
+        Total 1 Valid level shifters [Total Crossings: 1, Shared Crossings: 0]
+
+        3.1.1. Inferred type: LS_VALID, count: 1
+             Candidate Port: /registered_sync_fifo_tb/dut/u_input_register/fifo_full_i, Strategy: LS_PD2_TO_PD1,  Domain: /registered_sync_fifo_tb/dut/PD_1
+             Possible reason: 'Level shifter of required direction is present from (/registered_sync_fifo_tb/dut/PD_2) => (/registered_sync_fifo_tb/dut/PD_1)'
+             Analysis link: [PD1_to_PD2]
