@@ -23,8 +23,8 @@ module sync_fifo #(
     logic                  fifo_empty_next;
     logic                  write_enable;
     logic                  read_enable;
-    // logic                  gated_write_clk;
-    // logic                  gated_read_clk;
+    logic                  gated_write_clk;
+    logic                  gated_read_clk;
     logic [FOLD_WIDTH-1:0] fifo_mem [0:DEPTH-1];
     logic [FOLD_WIDTH-1:0] read_data_q;
 
@@ -49,33 +49,33 @@ module sync_fifo #(
         end
     end
 
-    // gated_clk u_write_clock_gate (
-    //     .clk_i       (clk),
-    //     .en_i        (write_enable),
-    //     .clk_gated_o (gated_write_clk)
-    // );
+    gated_clk u_write_clock_gate (
+        .clk_i       (clk),
+        .en_i        (write_enable),
+        .clk_gated_o (gated_write_clk)
+    );
 
-    // gated_clk u_read_clock_gate (
-    //     .clk_i       (clk),
-    //     .en_i        (read_enable),
-    //     .clk_gated_o (gated_read_clk)
-    // );
+    gated_clk u_read_clock_gate (
+        .clk_i       (clk),
+        .en_i        (read_enable),
+        .clk_gated_o (gated_read_clk)
+    );
 
-    always_ff @(posedge clk or negedge rst_n) begin
+    always_ff @(posedge gated_write_clk or negedge rst_n) begin
         if (!rst_n)
             write_pointer <= '0;
-        else if (write_enable) begin
+        else begin
             write_pointer <= next_write_pointer;
             fifo_mem[write_pointer[ADDR_WIDTH-1:0]] <= folded_history_i;
         end
     end
 
-    always_ff @(posedge clk or negedge rst_n) begin
+    always_ff @(posedge gated_read_clk or negedge rst_n) begin
         if (!rst_n) begin
             read_pointer <= '0;
             read_data_q  <= '0;
         end
-        else if (read_enable) begin
+        else begin
             read_pointer <= next_read_pointer;
             read_data_q  <= fifo_mem[read_pointer[ADDR_WIDTH-1:0]];
         end
